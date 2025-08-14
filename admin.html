@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BrandMate Admin — License Generator</title>
+<style>body{background:#0b0f15;color:#fff;font-family:ui-sans-serif,system-ui,Noto Sans KR;margin:0}.wrap{max-width:800px;margin:0 auto;padding:24px}.card{background:#131a22;border:1px solid #1f2937;border-radius:16px;padding:20px}label{display:block;color:#9fb0c0;font-size:12px;margin:10px 0 6px}input,select,button,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #2a3746;background:#0e141b;color:#e5e7eb}button{cursor:pointer;background:linear-gradient(180deg,#1d4ed8,#1e40af);border:none;font-weight:700;margin-top:12px}.muted{color:#9fb0c0;font-size:13px}.row{display:flex;gap:10px}</style>
+</head><body>
+<div class="wrap"><div class="card">
+<h1>🔑 라이선스 해시 생성기</h1>
+<p class="muted">이메일 + 라이선스 키 + SALT → SHA-256 해시 생성 → <code>licenses.json</code>에 추가</p>
+<label>SALT (index.html과 동일)</label><input id="salt" value="CHANGE_ME_SALT_2025">
+<div class="row"><div style="flex:1"><label>이메일</label><input id="email" placeholder="customer@example.com"></div><div style="flex:1"><label>라이선스 키</label><input id="key" placeholder="XXXX-XXXX-XXXX"></div></div>
+<div class="row"><div style="flex:1"><label>플랜</label><select id="plan"><option value="lite">lite</option><option value="pro">pro</option></select></div><div style="flex:1"><label>만료일</label><input id="exp" placeholder="YYYY-MM-DD"></div></div>
+<button id="btn">해시 만들기</button>
+<label>결과(JSON)</label><textarea id="out" rows="6"></textarea>
+<p class="muted">여러 고객은 배열로 저장: <code>[ {{...}}, {{...}} ]</code></p>
+</div></div>
+<script>
+async function sha256(s){const b=new TextEncoder().encode(s);const h=await crypto.subtle.digest('SHA-256',b);return Array.from(new Uint8Array(h)).map(x=>x.toString(16).padStart(2,'0')).join('')}
+document.getElementById('btn').onclick=async()=>{const s=document.getElementById('salt').value.trim(),e=document.getElementById('email').value.trim(),k=document.getElementById('key').value.trim(),p=document.getElementById('plan').value,x=document.getElementById('exp').value.trim();if(!s||!e||!k||!x){alert('모두 입력');return}const dig=await sha256(`${e}:${k}:${s}`);document.getElementById('out').value=JSON.stringify({hash:dig,plan:p,expires:x},null,2)}
+</script>
+</body></html>

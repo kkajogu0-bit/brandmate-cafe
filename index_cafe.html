@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BrandMate Pro — Cafe Edition (Final)</title>
+<style>
+:root{--bg:#0b0f15;--card:#131a22;--muted:#9fb0c0;--ok:#34d399;--warn:#f59e0b;--err:#ef4444;--white:#fff}
+*{box-sizing:border-box}body{margin:0;font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Noto Sans KR;background:var(--bg);color:var(--white)}
+.wrap{max-width:1200px;margin:0 auto;padding:24px}.card{background:#131a22;border:1px solid #1d2733;border-radius:16px;padding:20px}
+.grid{display:grid;gap:16px}.c2{grid-template-columns:repeat(2,minmax(0,1fr))}.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+input,select,textarea,button{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #2a3746;background:#0e141b;color:#e5e7eb}
+input[type=color]{padding:0;height:40px}button{cursor:pointer;background:linear-gradient(180deg,#1d4ed8,#1e40af);border:none;font-weight:700}
+button.secondary{background:#0e141b;border:1px solid #334155}.row{display:flex;gap:10px;flex-wrap:wrap}
+.tabbar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}.tabbar button{flex:1;min-width:180px}
+.muted{color:var(--muted);font-size:13px}.success{color:var(--ok)}.warn{color:var(--warn)}.error{color:var(--err)}.hidden{display:none}
+.preview{background:#0e141b;border:1px dashed #334155;padding:16px;border-radius:12px}.brand{background:#0b1320;padding:20px;border-radius:14px}
+.palette{display:flex;gap:8px}.sw{width:28px;height:28px;border-radius:8px;border:1px solid #334155}.sep{height:1px;background:#263042;margin:16px 0}
+.pill{display:inline-block;padding:4px 8px;border-radius:999px;border:1px solid #334155;font-size:12px}
+</style>
+<!-- libs -->
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- LOGIN -->
+  <div id="gate" class="card">
+    <h1>☕️ BrandMate Pro — Cafe Edition</h1>
+    <p class="muted">데모 모드로 모든 기능 체험 가능 · 실사용은 라이선스 필요</p>
+    <div class="grid c2">
+      <div><label>이메일</label><input id="email" placeholder="you@example.com"></div>
+      <div><label>라이선스 키</label><input id="license" placeholder="XXXX-XXXX-XXXX"></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button id="btnLogin">잠금 해제</button>
+      <button class="secondary" id="btnDemo">데모 모드</button>
+    </div>
+    <div id="gateMsg" class="muted" style="margin-top:8px"></div>
+  </div>
+
+  <!-- APP -->
+  <div id="app" class="hidden">
+    <div class="card" style="margin-top:16px">
+      <div class="tabbar">
+        <button id="tabBrand">① 브랜드 보드</button>
+        <button id="tabBanners">② 배너 생성</button>
+        <button id="tabCaptions">③ 캡션/오퍼</button>
+        <button id="tabAB">④ A/B CSV</button>
+        <button id="tabCalendar">⑤ 포스팅 캘린더</button>
+        <button id="tabAudit">⑥ 품질 점검</button>
+      </div>
+
+      <!-- BRAND -->
+      <section id="panelBrand">
+        <div class="grid c2">
+          <div>
+            <div class="row">
+              <div style="flex:1">
+                <label>브랜드명</label><input id="b_name" placeholder="예: BLUE BEAN CAFE">
+              </div>
+              <div style="flex:1">
+                <label>카페 테마</label>
+                <select id="preset">
+                  <option value="cafe_light">라이트 로스트(밝은 베이지)</option>
+                  <option value="cafe_dark" selected>다크 로스트(에스프레소)</option>
+                  <option value="cafe_matcha">말차·디저트</option>
+                </select>
+              </div>
+            </div>
+            <label>슬로건</label><input id="b_slogan" placeholder="한 잔의 집중을 내일로">
+            <label>톤/키워드(쉼표)</label><input id="b_tone" placeholder="학생, 집중, 미니멀, 신뢰">
+            <div class="grid c2">
+              <div><label>기본 색상</label><input type="color" id="b_c1" value="#2b170d"></div>
+              <div><label>보조 색상</label><input type="color" id="b_c2" value="#c08a5a"></div>
+            </div>
+            <label>폰트</label>
+            <select id="b_font">
+              <option value="Noto Sans KR, system-ui" selected>Noto Sans KR</option>
+              <option value="Inter, system-ui, sans-serif">Inter</option>
+              <option value="Roboto, system-ui, sans-serif">Roboto</option>
+              <option value="Segoe UI, Tahoma, Geneva, Verdana, sans-serif">Segoe UI</option>
+            </select>
+            <label>런칭 일정</label><input id="b_launch" placeholder="YYYY-MM-DD">
+            <div class="row" style="margin-top:10px">
+              <button id="btnPreviewBoard">미리보기</button>
+              <button class="secondary" id="btnPDF">PDF 다운로드</button>
+            </div>
+            <div id="contrastMsg" class="muted" style="margin-top:8px"></div>
+          </div>
+          <div class="preview">
+            <div class="row" style="justify-content:space-between;align-items:center">
+              <h3>미리보기 <span id="planBadge" class="pill">PRO</span></h3>
+            </div>
+            <div id="boardPreview" class="brand">
+              <div id="bp_brand" style="font-size:28px;font-weight:800">BRAND</div>
+              <div id="bp_slogan" class="muted">Slogan goes here</div>
+              <div class="sep"></div>
+              <div class="palette">
+                <div id="sw1" class="sw"></div><div id="sw2" class="sw"></div>
+                <div id="sw3" class="sw"></div><div id="sw4" class="sw"></div>
+              </div>
+              <div class="sep"></div>
+              <div class="muted">톤: <span id="bp_tone">미니멀, 신뢰</span></div>
+              <div class="muted">폰트: <span id="bp_font">Noto Sans KR</span></div>
+              <div class="muted">런칭: <span id="bp_launch">-</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- BANNERS -->
+      <section id="panelBanners" class="hidden">
+        <div class="grid c2">
+          <div>
+            <label>메인 문구</label><input id="bn_title" placeholder="오늘의 시그니처 20% OFF">
+            <label>보조 문구</label><input id="bn_sub" placeholder="학생증 제시 1,000원 할인">
+            <div class="grid c3">
+              <div><label>기본 색상</label><input type="color" id="bn_c1" value="#2b170d"></div>
+              <div><label>보조 색상</label><input type="color" id="bn_c2" value="#c08a5a"></div>
+              <div><label>텍스트 색</label><input type="color" id="bn_tx" value="#ffffff"></div>
+            </div>
+            <div class="grid c3">
+              <div>
+                <label>QR 목적지</label>
+                <select id="qr_type">
+                  <option value="custom">직접 입력</option>
+                  <option value="smartstore">스마트스토어</option>
+                  <option value="naverform">네이버 폼(예약)</option>
+                  <option value="kakao">카톡 오픈채팅</option>
+                </select>
+              </div>
+              <div><label>기본 URL/코드</label><input id="qr_base" placeholder="https://... 또는 코드/스토어 슬러그"></div>
+              <div><label>캠페인(UTM)</label><input id="qr_campaign" placeholder="september_promo"></div>
+            </div>
+            <div class="grid c3">
+              <div><label>워터마크</label><input id="bn_wm" placeholder="@yourcafe"></div>
+              <div><label>워터마크 표시</label><select id="bn_wm_on"><option value="on" selected>On</option><option value="off">Off</option></select></div>
+              <div><label>오퍼 배지</label>
+                <select id="offer_badge">
+                  <option value="">(없음)</option>
+                  <option>1+1</option><option>20% OFF</option><option>모닝 10%</option><option>학생 1,000원↓</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid c3">
+              <div><label><input type="checkbox" id="size_sq" checked> 1080×1080</label></div>
+              <div><label><input type="checkbox" id="size_por" checked> 1080×1350</label></div>
+              <div><label><input type="checkbox" id="size_hd" checked> 1920×1080</label></div>
+            </div>
+            <div class="grid c3">
+              <div><label>자동 대비 보정</label><select id="auto_contrast"><option value="on" selected>On</option><option value="off">Off</option></select></div>
+              <div><label>세이프 마진</label><select id="safe_overlay"><option value="on">On</option><option value="off" selected>Off</option></select></div>
+              <div><label>텍스트 배경</label><select id="text_bg"><option value="auto" selected>자동</option><option value="off">Off</option></select></div>
+            </div>
+            <div class="row" style="margin-top:10px">
+              <button id="btnGenBanners">배너 ZIP</button>
+              <button class="secondary" id="btnBuildQR">QR URL 생성</button>
+            </div>
+            <div id="qrFinal" class="muted" style="margin-top:4px"></div>
+          </div>
+          <div>
+            <canvas id="cnv" width="540" height="540" style="width:100%;background:#0b1320;border-radius:12px"></canvas>
+            <div id="bnContrastMsg" class="muted" style="margin-top:8px"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CAPTIONS -->
+      <section id="panelCaptions" class="hidden">
+        <div class="grid c2">
+          <div>
+            <label>키워드(쉼표)</label><input id="cp_kw" placeholder="아메리카노, 라떼, 드립, 스터디, 카페">
+            <label>톤</label>
+            <select id="cp_tone">
+              <option value="friendly">친근함</option>
+              <option value="minimal">미니멀</option>
+              <option value="energetic">에너지</option>
+            </select>
+            <div class="row" style="margin-top:10px">
+              <button id="btnGenCaps">캡션 5개</button>
+              <button class="secondary" id="btnCopyCaps">복사</button>
+            </div>
+            <div class="sep"></div>
+            <label>오퍼 아이디어(카페 전용)</label>
+            <div class="row">
+              <select id="offer_preset"><option value="cafe">카페</option></select>
+              <button class="secondary" id="btnOffers">5개 뽑기</button>
+            </div>
+          </div>
+          <div>
+            <label>결과</label>
+            <textarea id="cp_out" rows="16" placeholder="여기에 캡션/오퍼가 생성됩니다."></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- A/B -->
+      <section id="panelAB" class="hidden">
+        <div class="grid c2">
+          <div>
+            <label>캠페인 이름</label><input id="ab_name" placeholder="9월 시험기간 프로모션">
+            <label>버전 A</label><input id="ab_a" placeholder="버전 A 텍스트">
+            <label>버전 B</label><input id="ab_b" placeholder="버전 B 텍스트">
+            <div class="row" style="margin-top:10px"><button id="btnCSV">CSV 내보내기</button></div>
+          </div>
+          <div class="muted">CSV: date,campaign,version,caption,clicks,impressions,ctr,conversions</div>
+        </div>
+      </section>
+
+      <!-- CALENDAR -->
+      <section id="panelCalendar" class="hidden">
+        <div class="grid c2">
+          <div>
+            <label>시작일</label><input id="cal_start" placeholder="YYYY-MM-DD">
+            <label>빈도</label><select id="cal_freq"><option value="3x">주 3회(월/수/금)</option><option value="2x">주 2회(화/목)</option><option value="daily">매일</option></select>
+            <label>기간(일)</label><input id="cal_days" value="7">
+            <label>시간대</label><select id="cal_time"><option>09:00</option><option>18:00</option></select>
+            <label>플랫폼</label><select id="cal_platform"><option>instagram</option><option>smartstore</option><option>youtube</option></select>
+            <div class="row" style="margin-top:10px"><button id="btnCalCSV">캘린더 CSV</button></div>
+          </div>
+          <div class="muted">예약 게시용 CSV 생성</div>
+        </div>
+      </section>
+
+      <!-- AUDIT -->
+      <section id="panelAudit" class="hidden">
+        <div class="grid c2">
+          <div>
+            <h3>품질 점검</h3>
+            <div>대비 4.5+ : <b id="audit_contrast">-</b></div>
+            <div>오토 사이즈 : <b>OK</b></div>
+            <div>세이프 마진 6% : <b>OK</b></div>
+            <div>워터마크 : <b id="audit_wm">-</b></div>
+            <div>QR(UTM) : <b id="audit_qr">-</b></div>
+            <div>오퍼 포함 : <b id="audit_offer">-</b></div>
+            <div>캘린더 : <b id="audit_cal">-</b></div>
+            <div class="row" style="margin-top:10px"><button class="secondary" id="btnAuditNow">지금 점검</button></div>
+          </div>
+          <div class="muted">모든 지표가 OK면 퀄리티 기준 충족</div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== CONFIG (배포 전 변경) =====
+const LICENSES_URL = "https://raw.githubusercontent.com/<your-github-username>/<your-repo>/main/licenses.json";
+const SALT = "CHANGE_ME_SALT_2025";
+
+// ===== Helpers =====
+const $=id=>document.getElementById(id);
+function fmtDate(d){return d.toISOString().slice(0,10);}
+async function sha256(s){const b=new TextEncoder().encode(s);const h=await crypto.subtle.digest('SHA-256',b);return Array.from(new Uint8Array(h)).map(x=>x.toString(16).padStart(2,'0')).join('');}
+async function checkLicense(email,key){
+  try{const r=await fetch(LICENSES_URL,{cache:'no-store'});if(!r.ok)throw 0;const arr=await r.json();
+    const dig=await sha256(`${email}:${key}:${SALT}`);const today=fmtDate(new Date());
+    return arr.find(x=>x.hash===dig&&(!x.expires||x.expires>=today))||null;
+  }catch(e){return null}
+}
+function show(id){$(id).classList.remove('hidden')}function hide(id){$(id).classList.add('hidden')}
+function hexToRgb(h){h=h.replace('#','');if(h.length===3)h=[h[0]+h[0],h[1]+h[1],h[2]+h[2]].join('');const n=parseInt(h,16);return{r:(n>>16)&255,g:(n>>8)&255,b:n&255}}
+function shade(h,a){const{r,g,b}=hexToRgb(h);const f=x=>Math.max(0,Math.min(255,Math.round(x+(255-x)*a)));return '#'+[f(r),f(g),f(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+function relL(h){const{r,g,b}=hexToRgb(h);const L=c=>{c/=255;return c<=0.03928?c/12.92:Math.pow((c+0.055)/1.055,2.4)};return 0.2126*L(r)+0.7152*L(g)+0.0722*L(b)}
+function contrast(a,b){const A=relL(a),B=relL(b),hi=Math.max(A,B)+.05,lo=Math.min(A,B)+.05;return hi/lo}
+function wrapText(ctx,t,x,y,maxW,lH){const w=t.split(' ');let line='';for(let i=0;i<w.length;i++){const test=line+w[i]+' ';if(ctx.measureText(test).width>maxW&&i>0){ctx.fillText(line,x,y);line=w[i]+' ';y+=lH}else line=test}ctx.fillText(line,x,y)}
+function autosize(ctx,t,maxW,maxF,minF,wt){let s=maxF;while(s>minF){ctx.font=`${wt} ${s}px Inter, Arial`;if(ctx.measureText(t).width<=maxW)return s;s-=2}return minF}
+
+// ===== Gate =====
+function setPlan(){localStorage.setItem('bm_plan','pro');const el=$('planBadge');el.textContent='PRO';el.style.borderColor='#34d399'}
+$('btnLogin').onclick=async()=>{const e=$('email').value.trim(),k=$('license').value.trim();$('gateMsg').textContent='검증 중...';const lic=await checkLicense(e,k);if(lic){setTimeout(()=>{hide('gate');show('app');setPlan()},200)}else{$('gateMsg').innerHTML='<span class="error">인증 실패</span>'}}
+$('btnDemo').onclick=()=>{hide('gate');show('app');setPlan()}
+
+// ===== Cafe Presets =====
+const PRESETS={
+  cafe_light:{name:"BLUE BEAN CAFE",slogan:"한 잔의 집중을 내일로",tone:"학생, 집중, 미니멀, 신뢰",c1:"#e7d7c9",c2:"#7c5a3a",font:"Noto Sans KR, system-ui"},
+  cafe_dark:{name:"ESPRESSO ROOM",slogan:"한 모금의 확신",tone:"진한, 프리미엄, 신뢰",c1:"#2b170d",c2:"#c08a5a",font:"Noto Sans KR, system-ui"},
+  cafe_matcha:{name:"MATCHA & SUGAR",slogan:"오늘의 달콤한 초록",tone:"밝음, 디저트, 포근",c1:"#2e7d32",c2:"#f2e9e4",font:"Noto Sans KR, system-ui"}
+};
+function updatePreview(){
+  const name=$('b_name').value||'BRAND',slogan=$('b_slogan').value||'Slogan goes here',tone=$('b_tone').value||'미니멀, 신뢰',c1=$('b_c1').value,c2=$('b_c2').value,font=$('b_font').value,launch=$('b_launch').value||'-';
+  $('boardPreview').style.fontFamily=font;$('bp_brand').textContent=name;$('bp_slogan').textContent=slogan;$('bp_tone').textContent=tone;$('bp_font').textContent=font.split(',')[0];$('bp_launch').textContent=launch;
+  $('boardPreview').style.border='1px solid '+c1;['sw1','sw2','sw3','sw4'].forEach((id,i)=>$(id).style.background=[c1,c2,shade(c1,-.2),shade(c2,-.2)][i]);
+  const crW=contrast(c1,'#ffffff').toFixed(2),crB=contrast(c1,'#000000').toFixed(2);const cls=v=>v>=4.5?'success':(v>=3?'warn':'error');
+  $('contrastMsg').innerHTML=`대비: 흰 <b class="${cls(crW)}">${crW}</b> / 검정 <b class="${cls(crB)}">${crB}</b> (권장 ≥ 4.5)`;
+}
+$('btnPreviewBoard').onclick=updatePreview;
+$('preset').onchange=()=>{const p=PRESETS[$('preset').value];if(!p)return;$('b_name').value=p.name;$('b_slogan').value=p.slogan;$('b_tone').value=p.tone;$('b_c1').value=p.c1;$('b_c2').value=p.c2;$('b_font').value=p.font;updatePreview();}
+$('btnPDF').onclick=async()=>{const n=$('boardPreview');const c=await html2canvas(n,{scale:2,backgroundColor:'#0b1320'});const img=c.toDataURL('image/png');const{jsPDF}=window.jspdf;const pdf=new jsPDF({unit:'pt',format:'a4',compress:true});const w=pdf.internal.pageSize.getWidth();const h=(c.height/c.width)*w;pdf.addImage(img,'PNG',20,20,w-40,h-40);pdf.save('brand-board.pdf')}
+
+// ===== QR Builder =====
+function buildQR(){
+  const type=$('qr_type').value,base=$('qr_base').value.trim(),camp=$('qr_campaign').value.trim()||'campaign';
+  let url='';
+  if(type==='custom') url=base;
+  if(type==='smartstore') url=base.startsWith('http')?base:`https://smartstore.naver.com/${base}`;
+  if(type==='naverform') url=base.startsWith('http')?base:`https://naver.me/${base}`;
+  if(type==='kakao') url=base;
+  if(url){const g=url.includes('?')?'&':'?';url=`${url}${g}utm_source=brandmate&utm_medium=banner&utm_campaign=${encodeURIComponent(camp)}`}
+  $('qrFinal').textContent=url?`최종 QR URL: ${url}`:'QR URL을 입력하세요.'; $('qrFinal').dataset.url=url||'';
+  return url||'';
+}
+$('btnBuildQR').onclick=buildQR;
+
+// ===== Banner drawing =====
+function drawPill(ctx,text,x,y,padX,padY,bg,tx){
+  ctx.font=`700 ${Math.round(ctx.canvas.width*0.03)}px Inter, Arial`;
+  const tw=ctx.measureText(text).width;const w=tw+padX*2,h=Math.round(ctx.canvas.width*0.06)+padY*2;const r=h/2;
+  ctx.fillStyle=bg;ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();ctx.fill();
+  ctx.fillStyle=tx;ctx.fillText(text,x+padX,y+h-padY*1.2)
+}
+function drawBanner(ctx,w,h,title,sub,c1,c2,tx,variant,qrUrl,wm,wmOn,autoContrastOn,safeOverlay,textBg,offerBadge){
+  // background
+  const grad=ctx.createLinearGradient(0,0,w,h);grad.addColorStop(0,c1);grad.addColorStop(1,variant%2?shade(c2,-.15):c2);ctx.fillStyle=grad;ctx.fillRect(0,0,w,h);
+  // subtle coffee-bean pattern
+  ctx.globalAlpha=.07;for(let i=0;i<8;i++){ctx.fillStyle=i%2?'#000':'#fff';const r=40+Math.random()*90;ctx.beginPath();ctx.ellipse(Math.random()*w,Math.random()*h,r,r*.7,Math.random()*Math.PI,0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1;
+  const pad=Math.round(w*.06),maxW=w-pad*2;
+
+  // auto-contrast (text color)
+  const cr0=contrast(c1,tx);
+  if(autoContrastOn && cr0<4.5){const cw=contrast(c1,'#fff'),cb=contrast(c1,'#000');tx=cw>=cb?'#fff':'#000'}
+
+  // text background for readability
+  const titleY=Math.round(h*.38);
+  if(textBg==='auto'){ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(pad,titleY-Math.round(w*.10),maxW,Math.round(w*.15))}
+  const sT=autosize(ctx,title,maxW,Math.round(w*.09),Math.round(w*.05),'bold');
+  ctx.font=`bold ${sT}px Inter, Arial`;ctx.fillStyle=tx;wrapText(ctx,title,pad,titleY,maxW,Math.round(sT*1.1));
+
+  const sS=autosize(ctx,sub,maxW,Math.round(w*.045),Math.round(w*.03),'500');
+  if(textBg==='auto'){ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(pad,h-pad*2-Math.round(sS*1.2),maxW,Math.round(sS*2.2))}
+  ctx.font=`500 ${sS}px Inter, Arial`;ctx.fillStyle=tx;wrapText(ctx,sub,pad,h-pad*2,maxW,Math.round(sS*1.2));
+
+  // offer badge
+  if(offerBadge){const bg=shade(c2,-.2);const tcol=contrast(bg,'#fff')>=4.5?'#fff':'#000';drawPill(ctx,offerBadge,pad,pad,Math.round(w*.02),Math.round(w*.01),bg,tcol)}
+
+  // QR
+  if(qrUrl){const s=Math.round(w*.18);const qc=document.createElement('canvas');QRCode.toCanvas(qc,qrUrl,{width:s,margin:0});ctx.drawImage(qc,w-pad-s,h-pad-s,s,s)}
+
+  // watermark
+  if(wmOn&&wm){ctx.globalAlpha=.75;ctx.font=`600 ${Math.round(w*.03)}px Inter, Arial`;const tw=ctx.measureText(wm).width;ctx.fillStyle=tx;ctx.fillText(wm,w-pad-tw,pad+Math.round(w*.03));ctx.globalAlpha=1}
+
+  // safe area overlay
+  if(safeOverlay){ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=2;ctx.strokeRect(pad,pad,w-pad*2,h-pad*2)}
+
+  // FINAL contrast message (after auto-contrast) + expose for Audit
+  const crFinal=contrast(c1,tx);
+  window.__final_tx=tx; window.__final_bg=c1;
+  const msg=$('bnContrastMsg'); if(msg) msg.innerHTML=`텍스트 대비: <b class="${crFinal>=4.5?'success':(crFinal>=3?'warn':'error')}">${crFinal.toFixed(2)}</b> (권장 ≥ 4.5)`;
+}
+
+// Generate banners
+$('btnGenBanners').onclick=async()=>{
+  const brand=($('b_name').value||'BRAND').trim();
+  const title=$('bn_title').value||`${brand} 오늘의 시그니처`; let sub=$('bn_sub').value||'학생증 제시 1,000원 할인';
+  const c1=$('bn_c1').value,c2=$('bn_c2').value; let tx=$('bn_tx').value||'#ffffff';
+  const qrUrl=buildQR(); let wm=$('bn_wm').value.trim(); if(!wm&&brand) wm='@'+brand.replace(/\s+/g,'');
+  const wmOn=$('bn_wm_on').value==='on',autoOn=$('auto_contrast').value==='on',safeOn=$('safe_overlay').value==='on',textBg=$('text_bg').value,offer=$('offer_badge').value;
+  if(!sub.match(/%|1\+1|모닝|학생/i)&&offer){sub=sub+' · '+offer}
+  const sizes=[]; if($('size_sq').checked)sizes.push([1080,1080,'sq']); if($('size_por').checked)sizes.push([1080,1350,'por']); if($('size_hd').checked)sizes.push([1920,1080,'hd']);
+  const cv=$('cnv'),ctx=cv.getContext('2d'); const zip=new JSZip();
+  for(const [W,H,tag] of sizes){for(let i=0;i<6;i++){const c=document.createElement('canvas');c.width=W;c.height=H;const cx=c.getContext('2d');
+    drawBanner(cx,W,H,title,sub,c1,c2,tx,i,qrUrl,wm,wmOn,autoOn,safeOn,textBg,offer);
+    const data=c.toDataURL('image/png').split(',')[1]; zip.file(`banner_${tag}_${i+1}.png`,data,{base64:true}); if(i===0&&tag==='sq'){ctx.drawImage(c,0,0,540,540)}
+  }}
+  const blob=await zip.generateAsync({type:'blob'}); saveAs(blob,'banners_cafe.zip');
+  // audit flags
+  window.__audit_offer=!!offer; window.__audit_wm=wmOn&&!!wm; window.__audit_qr=!!qrUrl;
+}
+
+// ===== Captions (Cafe-focused) =====
+const CAFE_TASTING=["초콜릿","너티","카라멜","스모키","꽃향","시트러스","말차","바닐라"];
+const TEMPLATES={
+  friendly:[
+    "오늘도 @{brand} 와(과) 한 잔? {product} — {note} 노트로 {benefit} ☕️ #{hashtags}",
+    "모닝에는 {product}! {reason} 지금 만나보세요 🔥 #{hashtags}",
+    "{brand} 오늘 한정 {offer}. {call}",
+    "공부 모드 ON. {product}로 {benefit}! #{hashtags}"
+  ],
+  minimal:[
+    "{product}. {note}. #{hashtags}",
+    "{brand} — {tagline}. 오늘은 차분하게.",
+    "{offer}. {call}",
+    "{product}: {reason}"
+  ],
+  energetic:[
+    "{product} 폭발 혜택! {offer} ⚡️ 지금 {call}",
+    "집중력 올리고 성적 업! {reason} #{hashtags}",
+    "에너지 충전 완료. {product}로 {benefit}!",
+    "한정 수량 서두르세요 #{hashtags}"
+  ]
+};
+const OFFERS={cafe:[
+  "아메리카노 1+1(오전)","시즌라떼 20%","모닝 10%","학생증 1,000원 할인","리필 500원",
+  "드립 2잔 세트 10%","디저트 세트 2,000원↓","스탬프 10개 1잔 무료","테이크아웃 500원↓"
+]};
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function tags(kws){const base=kws.split(',').map(s=>('#'+s.trim().replace(/\s+/g,''))).filter(Boolean);const common=['카페','아메리카노','라떼','디저트','스터디','시험','집중'].map(x=>'#'+x);return [...base.slice(0,4),...common.slice(0,4)].join(' ')}
+$('btnGenCaps').onclick=()=>{
+  const brand=($('b_name').value||'BRAND').trim(),tagline=($('b_slogan').value||'슬로건').trim(),kws=$('cp_kw').value||'카페, 아메리카노, 라떼, 스터디',tone=$('cp_tone').value;
+  const product=brand+' 시그니처',benefit='집중 유지',reason='부드러운 카페인으로 오래 가요',call='방문/DM 주세요',hs=tags(kws),offer=pick(OFFERS.cafe),note=pick(CAFE_TASTING);
+  const arr=[];for(let i=0;i<5;i++){const tpl=TEMPLATES[tone][i%TEMPLATES[tone].length];arr.push(tpl.replace(/{brand}/g,brand).replace(/{product}/g,product).replace(/{benefit}/g,benefit).replace(/{reason}/g,reason).replace(/{offer}/g,offer).replace(/{call}/g,call).replace(/{tagline}/g,tagline).replace(/{hashtags}/g,hs).replace(/{note}/g,note))}
+  arr.push(`\n[오늘의 오퍼] ${offer}`); $('cp_out').value=arr.join("\n\n"); window.__audit_offer=true;
+}
+$('btnOffers').onclick=()=>{const p=Array.from({length:5},()=>pick(OFFERS.cafe));$('cp_out').value=($('cp_out').value?$('cp_out').value+"\n\n":"")+"[오퍼 아이디어]\n"+p.map((x,i)=>`${i+1}. ${x}`).join("\n")}
+// improved clipboard copy
+$('btnCopyCaps').onclick=async()=>{const txt=$('cp_out').value||'';try{await navigator.clipboard.writeText(txt)}catch(e){$('cp_out').select();document.execCommand('copy')}}
+
+// ===== A/B & Calendar =====
+$('btnCSV').onclick=()=>{const name=$('ab_name').value||'campaign',a=$('ab_a').value||'A text',b=$('ab_b').value||'B text',today=fmtDate(new Date());
+  const header='date,campaign,version,caption,clicks,impressions,ctr,conversions\n';
+  const rows=[`${today},${name},A,"${a.replace(/"/g,'""')}",0,0,0,0`,`${today},${name},B,"${b.replace(/"/g,'""')}",0,0,0,0`].join('\n');
+  const blob=new Blob([header+rows],{type:'text/csv;charset=utf-8'}); saveAs(blob,'ab.csv')
+}
+function parseDate(s){const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)}function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}function wday(d){return d.getDay()}
+$('btnCalCSV').onclick=()=>{const startStr=$('cal_start').value||fmtDate(new Date()),days=parseInt($('cal_days').value||'7',10),freq=$('cal_freq').value,time=$('cal_time').value,platform=$('cal_platform').value,start=parseDate(startStr);
+  const header='date,time,platform,caption\n';const rows=[];for(let i=0;i<days;i++){const day=addDays(start,i),w=wday(day);let pass=false;if(freq==='daily')pass=true;if(freq==='3x'&&(w===1||w===3||w===5))pass=true;if(freq==='2x'&&(w===2||w===4))pass=true;if(!pass)continue;rows.push(`${fmtDate(day)},${time},${platform},`)}
+  const blob=new Blob([header+rows.join('\n')],{type:'text/csv;charset=utf-8'}); saveAs(blob,'posting_calendar.csv'); window.__audit_cal=rows.length>=2
+}
+
+// ===== Audit =====
+function updateAudit(){
+  const bg=window.__final_bg||$('bn_c1').value, tx=window.__final_tx||($('bn_tx').value||'#fff');
+  const cr=contrast(bg,tx);
+  $('audit_contrast').textContent=cr.toFixed(2)+(cr>=4.5?' ✓':' ✗');
+  $('audit_wm').textContent=(window.__audit_wm?'OK ✓':'미설정 ✗');
+  $('audit_qr').textContent=(window.__audit_qr?'OK ✓':'미설정 ✗');
+  $('audit_offer').textContent=(window.__audit_offer?'OK ✓':'미포함 ✗');
+  $('audit_cal').textContent=(window.__audit_cal?'OK ✓':'미생성 ✗');
+}
+$('btnAuditNow').onclick=updateAudit;
+
+// ===== Tabs =====
+function showTab(n){['panelBrand','panelBanners','panelCaptions','panelAB','panelCalendar','panelAudit'].forEach((p,i)=>i===n?show(p):hide(p))}
+$('tabBrand').onclick=()=>showTab(0);$('tabBanners').onclick=()=>showTab(1);$('tabCaptions').onclick=()=>showTab(2);$('tabAB').onclick=()=>showTab(3);$('tabCalendar').onclick=()=>showTab(4);$('tabAudit').onclick=()=>{showTab(5);updateAudit()}
+
+// init (카페 다크 프리셋 기본적용)
+(function(){const p=PRESETS.cafe_dark;$('b_name').value=p.name;$('b_slogan').value=p.slogan;$('b_tone').value=p.tone;$('b_c1').value=p.c1;$('b_c2').value=p.c2;$('b_font').value=p.font;updatePreview();})();
+</script>
+</body>
+</html>
