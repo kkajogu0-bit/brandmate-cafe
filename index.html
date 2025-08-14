@@ -2,92 +2,123 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
+  <title>BrandMate Pro</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BrandMate Cafe</title>
   <style>
-    /* 로그인 화면 스타일 */
-    .login-container {
-        background-color: #161b22;
-        padding: 30px;
-        border-radius: 10px;
-        width: 400px;
-        box-shadow: 0 0 15px rgba(0,0,0,0.5);
-        color: white;
-        font-family: sans-serif;
-        margin: 20px auto;
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0d1117; color: white;
+      font-family: 'Segoe UI', sans-serif; min-height: 100vh;
+      display: flex; justify-content: center; align-items: center;
     }
-    .login-container h1 {
-        display: flex;
-        align-items: center;
-        font-size: 1.5em;
-        margin-bottom: 20px;
+    .container {
+      background: #161b22; padding: 2rem;
+      border-radius: 10px; width: 100%;
+      max-width: 400px; box-shadow: 0 0 20px rgba(0,0,0,0.5);
     }
-    .login-container label {
-        display: block;
-        margin: 15px 0 5px;
+    h1 { font-size: 1.5rem; margin-bottom: 1rem; }
+    input {
+      width: 100%; padding: 0.75rem; margin: 0.5rem 0;
+      background: #0d1117; border: 1px solid #30363d; border-radius: 5px;
+      color: white;
     }
-    .login-container input {
-        width: 100%;
-        padding: 10px;
-        border-radius: 5px;
-        border: none;
-        margin-bottom: 15px;
+    button {
+      width: 100%; padding: 0.75rem; margin-top: 0.5rem;
+      background: #238636; border: none; border-radius: 5px;
+      color: white; font-weight: bold; cursor: pointer;
+      transition: background 0.2s ease;
     }
-    .login-container button {
-        width: 100%;
-        padding: 10px;
-        background-color: #238636;
-        border: none;
-        border-radius: 5px;
-        color: white;
-        font-weight: bold;
-        cursor: pointer;
-        margin-bottom: 10px;
-    }
-    .login-container button:hover {
-        background-color: #2ea043;
-    }
-    .login-container .secondary {
-        background-color: #0d419d;
-    }
-    .login-container .secondary:hover {
-        background-color: #1f6feb;
-    }
+    button:hover { background: #2ea043; }
+    .secondary { background: #30363d; }
+    .secondary:hover { background: #484f58; }
+    .hidden { display: none; }
+    .dashboard { text-align: center; }
+    .dashboard h2 { margin-bottom: 1rem; }
   </style>
 </head>
 <body>
-
-  <!-- 로그인 폼 -->
-  <div class="login-container">
-      <h1>🔒 BrandMate Pro — 로그인</h1>
-      <p class="note">데모 모드로 모든 기능 체험 가능. 실사용은 라이선스 필요.</p>
-      <label for="email">이메일</label>
-      <input type="email" id="email" placeholder="you@example.com" />
-      <label for="license">라이선스 키</label>
-      <input type="text" id="license" placeholder="XXXX-XXXXX-XXXX" />
-      <button id="unlockBtn">잠금 해제</button>
-      <button id="demoBtn" class="secondary">데모 모드</button>
+  <!-- 로그인/회원가입 -->
+  <div class="container" id="auth-container">
+    <h1>🔒 BrandMate Pro 로그인</h1>
+    <input type="email" id="email" placeholder="이메일" />
+    <input type="password" id="password" placeholder="비밀번호" />
+    <button id="loginBtn">로그인</button>
+    <button id="signupBtn" class="secondary">회원가입</button>
+    <button id="demoBtn" class="secondary">데모 모드</button>
   </div>
 
-  <!-- 기존 index.html 내용 시작 -->
-  <!-- 여기에 기존 페이지 본문 코드를 붙이시면 됩니다 -->
-  <!-- 기존 내용 끝 -->
+  <!-- 대시보드 -->
+  <div class="container hidden" id="dashboard">
+    <div class="dashboard">
+      <h2>📊 BrandMate Pro 대시보드</h2>
+      <p id="userInfo"></p>
+      <button id="payBtn">💳 라이선스 결제하기</button>
+      <button id="logoutBtn" class="secondary">로그아웃</button>
+    </div>
+  </div>
 
-  <script>
-    document.getElementById("unlockBtn").addEventListener("click", function () {
-      const email = document.getElementById("email").value.trim();
-      const license = document.getElementById("license").value.trim();
-      if (email && license) {
-        alert("잠금 해제 성공! (" + email + ")");
-      } else {
-        alert("이메일과 라이선스 키를 입력하세요.");
-      }
+  <script type="module">
+    // Firebase SDK
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import {
+      getAuth, signInWithEmailAndPassword,
+      createUserWithEmailAndPassword, signOut
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    // Firebase 설정 (여기 값 바꿔야 함)
+    const firebaseConfig = {
+      apiKey: "YOUR_FIREBASE_API_KEY",
+      authDomain: "YOUR_FIREBASE_AUTH_DOMAIN",
+      projectId: "YOUR_FIREBASE_PROJECT_ID",
+      storageBucket: "YOUR_FIREBASE_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_FIREBASE_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const authContainer = document.getElementById("auth-container");
+    const dashboard = document.getElementById("dashboard");
+    const userInfo = document.getElementById("userInfo");
+
+    document.getElementById("loginBtn").addEventListener("click", () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      signInWithEmailAndPassword(auth, email, password)
+        .then(user => showDashboard(user.user))
+        .catch(err => alert(err.message));
     });
 
-    document.getElementById("demoBtn").addEventListener("click", function () {
-      alert("데모 모드로 접속합니다.");
+    document.getElementById("signupBtn").addEventListener("click", () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      createUserWithEmailAndPassword(auth, email, password)
+        .then(user => showDashboard(user.user))
+        .catch(err => alert(err.message));
     });
+
+    document.getElementById("demoBtn").addEventListener("click", () => {
+      showDashboard({ email: "demo@brandmate.com" });
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      signOut(auth).then(() => {
+        authContainer.classList.remove("hidden");
+        dashboard.classList.add("hidden");
+      });
+    });
+
+    document.getElementById("payBtn").addEventListener("click", () => {
+      // Stripe 테스트 결제 URL
+      window.open("https://buy.stripe.com/test_example_link", "_blank");
+    });
+
+    function showDashboard(user) {
+      userInfo.textContent = `로그인됨: ${user.email}`;
+      authContainer.classList.add("hidden");
+      dashboard.classList.remove("hidden");
+    }
   </script>
-
 </body>
 </html>
