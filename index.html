@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>BrandMate Pro — 단일파일 앱</title>
 <style>
   :root{--bg:#0d1117;--card:#161b22;--muted:#9fb0c0;--text:#e6edf3;--acc:#1f6feb;--ok:#34d399;--err:#ef4444}
   *{box-sizing:border-box} html,body{height:100%}
-  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, sans-serif}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Noto Sans KR,sans-serif}
   .wrap{max-width:1100px;margin:0 auto;padding:20px}
   .nav{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:14px}
   .nav .tabs{display:flex;gap:6px;flex-wrap:wrap}
@@ -25,11 +25,11 @@
   .muted{color:var(--muted)}
   .hidden{display:none}
   .ok{color:var(--ok)} .err{color:var(--err)}
-  /* mini dashboard */
   .dash-metric{display:grid;grid-template-columns:1fr auto;align-items:center;padding:12px;border:1px solid #30363d;border-radius:10px}
   .pill{border:1px solid #30363d;border-radius:999px;padding:4px 10px;display:inline-block;font-size:12px}
-  /* banner preview */
   #preview{width:100%;background:#0b1320;border-radius:10px}
+  .price-card h3{margin-bottom:6px}
+  .price-card h2{margin:8px 0}
   @media (max-width:780px){.g2,.g3{grid-template-columns:1fr}}
 </style>
 </head>
@@ -42,6 +42,7 @@
       <button class="btn" data-tab="auth">로그인</button>
       <button class="btn" data-tab="dash">대시보드</button>
       <button class="btn" data-tab="tools">도구</button>
+      <button class="btn" data-tab="pricing">요금제</button>
       <button class="btn" data-tab="owner">오너 도구</button>
     </div>
     <div class="row">
@@ -73,11 +74,12 @@
 
     <div class="row" style="margin-top:14px">
       <div class="card" style="flex:1">
-        <h3>💳 결제 (Stripe Payment Link)</h3>
-        <p class="muted">결제 후 ‘오너 도구’에서 라이선스 키를 발급/등록해 주세요.</p>
+        <h3>💳 빠른 결제(바로 이동)</h3>
+        <p class="muted">결제 후 ‘오너 도구’에서 라이선스 키 등록 시 PRO 활성화됩니다.</p>
         <div class="row">
           <button id="payBtn" class="btn primary">결제 페이지 열기</button>
           <a id="payLink" class="btn ghost" href="#" target="_blank" rel="noopener">링크 새창</a>
+          <button class="btn" data-tab-jump="pricing">요금제 보기</button>
         </div>
       </div>
       <div class="card" style="flex:1">
@@ -108,7 +110,7 @@
     </div>
   </section>
 
-  <!-- 도구(간단 배너 생성기 + 캡션) -->
+  <!-- 도구(배너 + 캡션) -->
   <section id="tab-tools" class="card hidden">
     <h2>🛠️ 도구</h2>
     <div class="grid g2" style="margin-top:10px">
@@ -154,7 +156,36 @@
     </div>
   </section>
 
-  <!-- 오너 도구(라이선스 해시 생성기) -->
+  <!-- 요금제 -->
+  <section id="tab-pricing" class="card hidden">
+    <h2>💳 요금제</h2>
+    <p class="muted" style="margin-bottom:12px">사장님 친화 가격 — 결제 후 즉시 사용 가능합니다.</p>
+    <div class="grid g3">
+      <div class="card price-card">
+        <h3>프로</h3>
+        <p class="muted">모든 기능 · 1인용</p>
+        <h2>₩4,900 / 월</h2>
+        <div class="muted">₩49,000 / 1년</div>
+        <button class="btn primary" onclick="window.open(PRO_LINK,'_blank')">프로 결제</button>
+      </div>
+      <div class="card price-card">
+        <h3>팀</h3>
+        <p class="muted">최대 5명 라이선스 포함</p>
+        <h2>₩9,900 / 월</h2>
+        <div class="muted">₩99,000 / 1년</div>
+        <button class="btn primary" onclick="window.open(TEAM_LINK,'_blank')">팀 결제</button>
+      </div>
+      <div class="card price-card">
+        <h3>기업용</h3>
+        <p class="muted">무제한 팀원 · 전담 지원</p>
+        <h2>₩19,900 / 월</h2>
+        <div class="muted">₩199,000 / 1년</div>
+        <button class="btn primary" onclick="window.open(BIZ_LINK,'_blank')">기업용 결제</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 오너 도구(라이선스 해시 생성) -->
   <section id="tab-owner" class="card hidden">
     <h2>🗝️ 오너 도구 — 라이선스 해시 생성</h2>
     <p class="muted">이메일 + 키 + SALT → SHA-256 해시를 만들어 <b>licenses.json</b>에 추가하세요.</p>
@@ -175,11 +206,16 @@
 </div>
 
 <script type="module">
-// ============== TODO: 설정 3곳 수정 ==============
-// 1) Stripe Payment Link(테스트) — Stripe 대시보드에서 만든 결제 링크로 교체
-const STRIPE_LINK = "https://buy.stripe.com/test_example_link";
+// ============== TODO: 설정(4곳) ==============
+// 1) Stripe 링크(빠른 결제 버튼)
+const STRIPE_LINK = "https://buy.stripe.com/test_example_link"; // 로그인 탭의 '결제 페이지 열기'용
 
-// 2) Firebase 설정 — 본인 프로젝트 값으로 교체
+// 2) 요금제 별 Stripe Payment Link 3개
+const PRO_LINK  = "https://buy.stripe.com/your_pro_link";
+const TEAM_LINK = "https://buy.stripe.com/your_team_link";
+const BIZ_LINK  = "https://buy.stripe.com/your_biz_link";
+
+// 3) Firebase 설정 (본인 프로젝트 값으로 교체)
 const firebaseConfig = {
   apiKey: "YOUR_FIREBASE_API_KEY",
   authDomain: "YOUR_FIREBASE_AUTH_DOMAIN",
@@ -187,41 +223,35 @@ const firebaseConfig = {
   appId: "YOUR_FIREBASE_APP_ID"
 };
 
-// 3) 라이선스 화이트리스트 위치 + SALT — GitHub raw JSON 주소 & 임의 SALT
+// 4) 라이선스 JSON & SALT (선택: 화이트리스트 잠금)
 const LICENSES_URL = "https://raw.githubusercontent.com/<your-id>/<your-repo>/main/licenses.json";
 const SALT = "CHANGE_ME_SALT_2025";
-// =================================================
+// =============================================
 
-// ─── 공통 도우미 ──────────────────────────────────
-const $ = (q)=>document.querySelector(q);
-const $$ = (q)=>document.querySelectorAll(q);
-const setTxt=(el,v)=>el.textContent=v;
-const show=(id)=>document.getElementById(id).classList.remove('hidden');
-const hide=(id)=>document.getElementById(id).classList.add('hidden');
-
-async function sha256(s){
-  const b=new TextEncoder().encode(s);
-  const h=await crypto.subtle.digest("SHA-256",b);
-  return Array.from(new Uint8Array(h)).map(x=>x.toString(16).padStart(2,'0')).join('');
-}
+// ─── 공통 ──────────────────────────────────────
+const $  = sel => document.querySelector(sel);
+const $$ = sel => document.querySelectorAll(sel);
+const setTxt = (el,v)=>el.textContent=v;
+const show = id => document.getElementById(id).classList.remove('hidden');
+const hide = id => document.getElementById(id).classList.add('hidden');
 function fmt(d){return d.toISOString().slice(0,10);}
 
-// ─── 탭 전환 ──────────────────────────────────────
+// 탭 전환
 function activate(tab){
-  ["auth","dash","tools","owner"].forEach(t=>{
-    document.getElementById("tab-"+t).classList.toggle("hidden",t!==tab);
+  ["auth","dash","tools","pricing","owner"].forEach(t=>{
+    document.getElementById("tab-"+t).classList.toggle("hidden", t!==tab);
   });
 }
 $$('.nav .btn[data-tab]').forEach(b=>b.addEventListener('click',()=>activate(b.dataset.tab)));
 $$('[data-tab-jump]').forEach(b=>b.addEventListener('click',()=>activate(b.dataset.tabJump)));
-activate('auth'); // 초기
+activate('auth');
 
-// ─── Stripe 링크 ──────────────────────────────────
+// Stripe 버튼
 $("#payBtn").addEventListener("click", ()=>window.open(STRIPE_LINK,"_blank"));
 $("#payLink").href = STRIPE_LINK;
-$("#toPayment").addEventListener("click", ()=>{activate('auth'); window.scrollTo({top:0,behavior:'smooth'})});
+$("#toPayment").addEventListener("click", ()=>{activate('pricing'); window.scrollTo({top:0,behavior:'smooth'})});
 
-// ─── Firebase Auth ────────────────────────────────
+// Firebase Auth
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
@@ -265,7 +295,12 @@ onAuthStateChanged(auth, (user)=>{
   updatePlanUI();
 });
 
-// ─── 라이선스 체크(화이트리스트 JSON) ─────────────
+// 라이선스 화이트리스트(선택)
+async function sha256(s){
+  const b=new TextEncoder().encode(s);
+  const h=await crypto.subtle.digest("SHA-256",b);
+  return Array.from(new Uint8Array(h)).map(x=>x.toString(16).padStart(2,'0')).join('');
+}
 async function fetchLicenses(){
   const r = await fetch(LICENSES_URL, {cache:"no-store"});
   if(!r.ok) throw new Error("licenses.json을 불러올 수 없음");
@@ -301,55 +336,29 @@ function updatePlanUI(){
   $("#expiry").textContent = until;
 }
 
-// ─── 오너 도구: 해시 생성기 ───────────────────────
-$("#makeHash").addEventListener("click", async ()=>{
-  const em = $("#ownEmail").value.trim();
-  const key = $("#ownKey").value.trim();
-  const salt = $("#ownSalt").value.trim() || SALT;
-  if(!em || !key){ $("#hashOut").textContent = "이메일/키를 입력하세요"; return; }
-  const digest = await sha256(`${em}:${key}:${salt}`);
-  const obj = {hash:digest, plan: $("#ownPlan").value, ...( $("#ownExp").value ? {expires:$("#ownExp").value} : {} )};
-  $("#hashOut").textContent = JSON.stringify(obj, null, 2);
-});
-
-// ─── 배너 생성(간단 캔버스) ───────────────────────
+// 배너 생성(간단)
 const cv = document.getElementById('preview');
 const ctx = cv.getContext('2d');
-
 function drawBanner(){
   const W=cv.width, H=cv.height;
   const c1=$("#c1").value, c2=$("#c2").value, tx=$("#tx").value;
   const title=$("#bnTitle").value||"오늘의 시그니처 20% OFF";
   const sub=$("#bnSub").value||"학생증 제시 1,000원↓ · 이번 주 한정";
-
-  // 배경 그라디언트
   const g=ctx.createLinearGradient(0,0,W,H); g.addColorStop(0,c1); g.addColorStop(1,c2);
   ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-
-  // 살짝 패턴
   ctx.globalAlpha=0.07; ctx.fillStyle="#fff";
   for(let i=0;i<6;i++){ ctx.beginPath(); ctx.arc(Math.random()*W,Math.random()*H,80+Math.random()*120,0,Math.PI*2); ctx.fill(); }
   ctx.globalAlpha=1;
-
-  // 텍스트
   ctx.fillStyle=tx;
-  ctx.font=`800 96px Inter, Pretendard, Noto Sans KR, sans-serif`;
-  ctx.fillText(title, 80, 520, W-160);
-  ctx.font=`500 44px Inter, Pretendard, Noto Sans KR, sans-serif`;
-  ctx.fillText(sub, 80, 620, W-160);
-
+  ctx.font=`800 96px Inter, Pretendard, Noto Sans KR, sans-serif`; ctx.fillText(title, 80, 520, W-160);
+  ctx.font=`500 44px Inter, Pretendard, Noto Sans KR, sans-serif`; ctx.fillText(sub, 80, 620, W-160);
   $("#bnNote").textContent = "미리보기 1080×1080 — PNG 저장을 누르면 파일이 내려갑니다.";
 }
 $("#genBanner").addEventListener("click", drawBanner);
-$("#saveBanner").addEventListener("click", ()=>{
-  const a=document.createElement('a');
-  a.download='banner.png';
-  a.href=cv.toDataURL('image/png');
-  a.click();
-});
+$("#saveBanner").addEventListener("click", ()=>{ const a=document.createElement('a'); a.download='banner.png'; a.href=cv.toDataURL('image/png'); a.click(); });
 drawBanner();
 
-// ─── 캡션 생성 ────────────────────────────────────
+// 캡션 생성
 const CAP = {
   friendly:[
     "오늘도 @{brand}! {offer} ☕️ #{tags}",
