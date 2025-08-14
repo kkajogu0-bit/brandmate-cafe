@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>BrandMate Pro — 단일파일 앱</title>
+<title>BrandMate Pro — 단일파일 앱 (Basic / Pro)</title>
 <style>
   :root{--bg:#0d1117;--card:#161b22;--muted:#9fb0c0;--text:#e6edf3;--acc:#1f6feb;--ok:#34d399;--err:#ef4444}
   *{box-sizing:border-box} html,body{height:100%}
@@ -53,7 +53,7 @@
 
   <!-- 로그인/회원가입 -->
   <section id="tab-auth" class="card">
-    <h2>🔒 BrandMate Pro — 로그인</h2>
+    <h2>🔒 BrandMate — 로그인</h2>
     <p class="muted">데모 모드로 모든 기능 체험 가능. 정식 사용은 결제 또는 라이선스 필요.</p>
     <div class="grid g2">
       <div>
@@ -74,12 +74,12 @@
 
     <div class="row" style="margin-top:14px">
       <div class="card" style="flex:1">
-        <h3>💳 빠른 결제(바로 이동)</h3>
-        <p class="muted">결제 후 ‘오너 도구’에서 라이선스 키 등록 시 PRO 활성화됩니다.</p>
+        <h3>💳 빠른 결제</h3>
+        <p class="muted">원하는 요금제 결제 후 ‘오너 도구’에서 라이선스 키 등록 시 플랜 활성화됩니다.</p>
         <div class="row">
-          <button id="payBtn" class="btn primary">결제 페이지 열기</button>
-          <a id="payLink" class="btn ghost" href="#" target="_blank" rel="noopener">링크 새창</a>
-          <button class="btn" data-tab-jump="pricing">요금제 보기</button>
+          <button id="payBasic" class="btn">베이직 결제</button>
+          <button id="payPro" class="btn primary">프로 결제</button>
+          <button class="btn ghost" data-tab-jump="pricing">요금제 보기</button>
         </div>
       </div>
       <div class="card" style="flex:1">
@@ -156,31 +156,24 @@
     </div>
   </section>
 
-  <!-- 요금제 -->
+  <!-- 요금제 (Basic / Pro) -->
   <section id="tab-pricing" class="card hidden">
     <h2>💳 요금제</h2>
     <p class="muted" style="margin-bottom:12px">사장님 친화 가격 — 결제 후 즉시 사용 가능합니다.</p>
-    <div class="grid g3">
+    <div class="grid g2">
+      <div class="card price-card">
+        <h3>베이직</h3>
+        <p class="muted">필수 기능 · 1인용</p>
+        <h2>₩2,900 / 월</h2>
+        <div class="muted">₩29,000 / 1년</div>
+        <button class="btn primary" onclick="window.open(BASIC_LINK,'_blank')">베이직 결제</button>
+      </div>
       <div class="card price-card">
         <h3>프로</h3>
         <p class="muted">모든 기능 · 1인용</p>
         <h2>₩4,900 / 월</h2>
         <div class="muted">₩49,000 / 1년</div>
         <button class="btn primary" onclick="window.open(PRO_LINK,'_blank')">프로 결제</button>
-      </div>
-      <div class="card price-card">
-        <h3>팀</h3>
-        <p class="muted">최대 5명 라이선스 포함</p>
-        <h2>₩9,900 / 월</h2>
-        <div class="muted">₩99,000 / 1년</div>
-        <button class="btn primary" onclick="window.open(TEAM_LINK,'_blank')">팀 결제</button>
-      </div>
-      <div class="card price-card">
-        <h3>기업용</h3>
-        <p class="muted">무제한 팀원 · 전담 지원</p>
-        <h2>₩19,900 / 월</h2>
-        <div class="muted">₩199,000 / 1년</div>
-        <button class="btn primary" onclick="window.open(BIZ_LINK,'_blank')">기업용 결제</button>
       </div>
     </div>
   </section>
@@ -192,7 +185,7 @@
     <div class="grid g3">
       <div><label>이메일</label><input id="ownEmail" placeholder="customer@example.com"></div>
       <div><label>라이선스 키</label><input id="ownKey" placeholder="ABCD-EFGH-IJKL"></div>
-      <div><label>플랜</label><select id="ownPlan"><option>pro</option><option>lite</option></select></div>
+      <div><label>플랜</label><select id="ownPlan"><option>basic</option><option>pro</option></select></div>
     </div>
     <div class="grid g3">
       <div><label>만료일(선택)</label><input id="ownExp" placeholder="YYYY-MM-DD"></div>
@@ -206,16 +199,12 @@
 </div>
 
 <script type="module">
-// ============== TODO: 설정(4곳) ==============
-// 1) Stripe 링크(빠른 결제 버튼)
-const STRIPE_LINK = "https://buy.stripe.com/test_example_link"; // 로그인 탭의 '결제 페이지 열기'용
+// ============== TODO: 설정(3곳) ==============
+// 1) Stripe Payment Links (두 개)
+const BASIC_LINK = "https://buy.stripe.com/your_basic_link"; // 베이직
+const PRO_LINK   = "https://buy.stripe.com/your_pro_link";   // 프로
 
-// 2) 요금제 별 Stripe Payment Link 3개
-const PRO_LINK  = "https://buy.stripe.com/your_pro_link";
-const TEAM_LINK = "https://buy.stripe.com/your_team_link";
-const BIZ_LINK  = "https://buy.stripe.com/your_biz_link";
-
-// 3) Firebase 설정 (본인 프로젝트 값으로 교체)
+// 2) Firebase 설정 (본인 프로젝트 값으로 교체)
 const firebaseConfig = {
   apiKey: "YOUR_FIREBASE_API_KEY",
   authDomain: "YOUR_FIREBASE_AUTH_DOMAIN",
@@ -223,7 +212,7 @@ const firebaseConfig = {
   appId: "YOUR_FIREBASE_APP_ID"
 };
 
-// 4) 라이선스 JSON & SALT (선택: 화이트리스트 잠금)
+// 3) 라이선스 JSON & SALT (선택: 화이트리스트 잠금)
 const LICENSES_URL = "https://raw.githubusercontent.com/<your-id>/<your-repo>/main/licenses.json";
 const SALT = "CHANGE_ME_SALT_2025";
 // =============================================
@@ -246,9 +235,9 @@ $$('.nav .btn[data-tab]').forEach(b=>b.addEventListener('click',()=>activate(b.d
 $$('[data-tab-jump]').forEach(b=>b.addEventListener('click',()=>activate(b.dataset.tabJump)));
 activate('auth');
 
-// Stripe 버튼
-$("#payBtn").addEventListener("click", ()=>window.open(STRIPE_LINK,"_blank"));
-$("#payLink").href = STRIPE_LINK;
+// 빠른 결제 버튼(로그인 탭)
+$("#payBasic").addEventListener("click", ()=>window.open(BASIC_LINK,"_blank"));
+$("#payPro").addEventListener("click",   ()=>window.open(PRO_LINK,"_blank"));
 $("#toPayment").addEventListener("click", ()=>{activate('pricing'); window.scrollTo({top:0,behavior:'smooth'})});
 
 // Firebase Auth
@@ -319,9 +308,9 @@ $("#unlockBtn").addEventListener("click", async ()=>{
   $("#licMsg").textContent = "검증 중...";
   const rec = await checkLicense($("#licEmail").value.trim(), $("#licKey").value.trim());
   if(rec){
-    localStorage.setItem("bm_plan", (rec.plan||"pro"));
+    localStorage.setItem("bm_plan", (rec.plan||"basic"));   // basic 또는 pro
     localStorage.setItem("bm_until", (rec.expires||"—"));
-    $("#licMsg").innerHTML = `<span class="ok">인증 성공</span> — 플랜: ${(rec.plan||"pro").toUpperCase()}${rec.expires?` · 만료 ${rec.expires}`:''}`;
+    $("#licMsg").innerHTML = `<span class="ok">인증 성공</span> — 플랜: ${(rec.plan||"basic").toUpperCase()}${rec.expires?` · 만료 ${rec.expires}`:''}`;
     updatePlanUI(); activate('dash');
   }else{
     $("#licMsg").innerHTML = `<span class="err">인증 실패</span> — 이메일/키 또는 만료 확인`;
@@ -329,7 +318,7 @@ $("#unlockBtn").addEventListener("click", async ()=>{
 });
 
 function updatePlanUI(){
-  const plan = localStorage.getItem("bm_plan") || "lite";
+  const plan = (localStorage.getItem("bm_plan") || "lite").toLowerCase(); // lite/basic/pro
   const until = localStorage.getItem("bm_until") || "—";
   $("#plan").textContent = plan.toUpperCase();
   $("#planBadge").textContent = `PLAN: ${plan.toUpperCase()}`;
@@ -382,7 +371,6 @@ const CAP = {
     "DM 열려있어요 → {call}"
   ]
 };
-function pick(a){return a[Math.floor(Math.random()*a.length)]}
 function hashTags(k){return k.split(',').map(s=>('#'+s.trim().replace(/\s+/g,''))).filter(Boolean).slice(0,5).join(' ')}
 $("#genCaps").addEventListener("click", ()=>{
   const tone=$("#tone").value;
@@ -394,11 +382,13 @@ $("#genCaps").addEventListener("click", ()=>{
   const call="방문/선주문";
   const tags=hashTags($("#kw").value||"카페,학생,집중,시험,할인");
   const tagline="한 잔의 집중을 내일로";
-  const arr = Array.from({length:5}, (_,i)=>{
-    return CAP[tone][i].replace(/{brand}/g,brand).replace(/{product}/g,product)
-      .replace(/{offer}/g,offer).replace(/{reason}/g,reason).replace(/{benefit}/g,benefit)
-      .replace(/{call}/g,call).replace(/{tags}/g,tags).replace(/{tagline}/g,tagline);
-  });
+  const arr = [0,1,2,3,4].map(i=>
+    CAP[tone][i]
+      .replace(/{brand}/g,brand).replace(/{product}/g,product)
+      .replace(/{offer}/g,offer).replace(/{reason}/g,reason)
+      .replace(/{benefit}/g,benefit).replace(/{call}/g,call)
+      .replace(/{tags}/g,tags).replace(/{tagline}/g,tagline)
+  );
   $("#capsOut").value = arr.join("\n\n");
 });
 $("#copyCaps").addEventListener("click", ()=>{ $("#capsOut").select(); document.execCommand('copy'); });
