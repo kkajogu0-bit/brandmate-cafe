@@ -1,124 +1,399 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <title>BrandMate Pro</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: #0d1117; color: white;
-      font-family: 'Segoe UI', sans-serif; min-height: 100vh;
-      display: flex; justify-content: center; align-items: center;
-    }
-    .container {
-      background: #161b22; padding: 2rem;
-      border-radius: 10px; width: 100%;
-      max-width: 400px; box-shadow: 0 0 20px rgba(0,0,0,0.5);
-    }
-    h1 { font-size: 1.5rem; margin-bottom: 1rem; }
-    input {
-      width: 100%; padding: 0.75rem; margin: 0.5rem 0;
-      background: #0d1117; border: 1px solid #30363d; border-radius: 5px;
-      color: white;
-    }
-    button {
-      width: 100%; padding: 0.75rem; margin-top: 0.5rem;
-      background: #238636; border: none; border-radius: 5px;
-      color: white; font-weight: bold; cursor: pointer;
-      transition: background 0.2s ease;
-    }
-    button:hover { background: #2ea043; }
-    .secondary { background: #30363d; }
-    .secondary:hover { background: #484f58; }
-    .hidden { display: none; }
-    .dashboard { text-align: center; }
-    .dashboard h2 { margin-bottom: 1rem; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BrandMate Pro — 단일파일 앱</title>
+<style>
+  :root{--bg:#0d1117;--card:#161b22;--muted:#9fb0c0;--text:#e6edf3;--acc:#1f6feb;--ok:#34d399;--err:#ef4444}
+  *{box-sizing:border-box} html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, sans-serif}
+  .wrap{max-width:1100px;margin:0 auto;padding:20px}
+  .nav{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .nav .tabs{display:flex;gap:6px;flex-wrap:wrap}
+  .btn{cursor:pointer;border:1px solid #30363d;background:#21262d;color:#fff;padding:10px 14px;border-radius:10px}
+  .btn.primary{background:linear-gradient(180deg,#2563eb,#1d4ed8);border:none}
+  .btn.ghost{background:transparent;border-color:#30363d}
+  .card{background:var(--card);border:1px solid #30363d;border-radius:14px;padding:18px}
+  .grid{display:grid;gap:12px}
+  .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  label{display:block;color:var(--muted);font-size:12px;margin:2px 0 6px}
+  input,select,textarea{width:100%;background:#0d1117;border:1px solid #30363d;color:#e6edf3;border-radius:10px;padding:10px}
+  textarea{resize:vertical;min-height:120px}
+  .muted{color:var(--muted)}
+  .hidden{display:none}
+  .ok{color:var(--ok)} .err{color:var(--err)}
+  /* mini dashboard */
+  .dash-metric{display:grid;grid-template-columns:1fr auto;align-items:center;padding:12px;border:1px solid #30363d;border-radius:10px}
+  .pill{border:1px solid #30363d;border-radius:999px;padding:4px 10px;display:inline-block;font-size:12px}
+  /* banner preview */
+  #preview{width:100%;background:#0b1320;border-radius:10px}
+  @media (max-width:780px){.g2,.g3{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
-  <!-- 로그인/회원가입 -->
-  <div class="container" id="auth-container">
-    <h1>🔒 BrandMate Pro 로그인</h1>
-    <input type="email" id="email" placeholder="이메일" />
-    <input type="password" id="password" placeholder="비밀번호" />
-    <button id="loginBtn">로그인</button>
-    <button id="signupBtn" class="secondary">회원가입</button>
-    <button id="demoBtn" class="secondary">데모 모드</button>
-  </div>
+<div class="wrap">
 
-  <!-- 대시보드 -->
-  <div class="container hidden" id="dashboard">
-    <div class="dashboard">
-      <h2>📊 BrandMate Pro 대시보드</h2>
-      <p id="userInfo"></p>
-      <button id="payBtn">💳 라이선스 결제하기</button>
-      <button id="logoutBtn" class="secondary">로그아웃</button>
+  <!-- 상단 내비게이션 -->
+  <div class="nav">
+    <div class="tabs">
+      <button class="btn" data-tab="auth">로그인</button>
+      <button class="btn" data-tab="dash">대시보드</button>
+      <button class="btn" data-tab="tools">도구</button>
+      <button class="btn" data-tab="owner">오너 도구</button>
+    </div>
+    <div class="row">
+      <span id="planBadge" class="pill">PLAN: LITE</span>
+      <button id="logoutBtn" class="btn ghost hidden">로그아웃</button>
     </div>
   </div>
 
-  <script type="module">
-    // Firebase SDK
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import {
-      getAuth, signInWithEmailAndPassword,
-      createUserWithEmailAndPassword, signOut
-    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  <!-- 로그인/회원가입 -->
+  <section id="tab-auth" class="card">
+    <h2>🔒 BrandMate Pro — 로그인</h2>
+    <p class="muted">데모 모드로 모든 기능 체험 가능. 정식 사용은 결제 또는 라이선스 필요.</p>
+    <div class="grid g2">
+      <div>
+        <label>이메일</label>
+        <input id="email" type="email" placeholder="you@example.com">
+      </div>
+      <div>
+        <label>비밀번호</label>
+        <input id="password" type="password" placeholder="8자 이상">
+      </div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button id="loginBtn" class="btn primary">로그인</button>
+      <button id="signupBtn" class="btn">회원가입</button>
+      <button id="demoBtn" class="btn ghost">데모 모드</button>
+    </div>
+    <div id="authMsg" class="muted" style="margin-top:6px"></div>
 
-    // Firebase 설정 (여기 값 바꿔야 함)
-    const firebaseConfig = {
-      apiKey: "YOUR_FIREBASE_API_KEY",
-      authDomain: "YOUR_FIREBASE_AUTH_DOMAIN",
-      projectId: "YOUR_FIREBASE_PROJECT_ID",
-      storageBucket: "YOUR_FIREBASE_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_FIREBASE_APP_ID"
-    };
+    <div class="row" style="margin-top:14px">
+      <div class="card" style="flex:1">
+        <h3>💳 결제 (Stripe Payment Link)</h3>
+        <p class="muted">결제 후 ‘오너 도구’에서 라이선스 키를 발급/등록해 주세요.</p>
+        <div class="row">
+          <button id="payBtn" class="btn primary">결제 페이지 열기</button>
+          <a id="payLink" class="btn ghost" href="#" target="_blank" rel="noopener">링크 새창</a>
+        </div>
+      </div>
+      <div class="card" style="flex:1">
+        <h3>🔑 라이선스 잠금 해제</h3>
+        <div class="grid g2">
+          <div><label>이메일</label><input id="licEmail" placeholder="결제/등록 이메일"></div>
+          <div><label>라이선스 키</label><input id="licKey" placeholder="XXXX-XXXX-XXXX"></div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button id="unlockBtn" class="btn">잠금 해제</button>
+        </div>
+        <div id="licMsg" class="muted" style="margin-top:6px"></div>
+      </div>
+    </div>
+  </section>
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+  <!-- 대시보드 -->
+  <section id="tab-dash" class="card hidden">
+    <h2>📊 대시보드</h2>
+    <div class="grid g3" style="margin-top:10px">
+      <div class="dash-metric"><div>로그인 상태</div><div id="who" class="pill">게스트</div></div>
+      <div class="dash-metric"><div>플랜</div><div id="plan" class="pill">LITE</div></div>
+      <div class="dash-metric"><div>만료일</div><div id="expiry" class="pill">—</div></div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn primary" data-tab-jump="tools">지금 바로 배너 만들기</button>
+      <button id="toPayment" class="btn">결제/업그레이드</button>
+    </div>
+  </section>
 
-    const authContainer = document.getElementById("auth-container");
-    const dashboard = document.getElementById("dashboard");
-    const userInfo = document.getElementById("userInfo");
+  <!-- 도구(간단 배너 생성기 + 캡션) -->
+  <section id="tab-tools" class="card hidden">
+    <h2>🛠️ 도구</h2>
+    <div class="grid g2" style="margin-top:10px">
+      <div>
+        <h3>배너</h3>
+        <label>제목</label><input id="bnTitle" placeholder="오늘의 시그니처 20% OFF">
+        <label>보조 문구</label><input id="bnSub" placeholder="학생증 제시 1,000원↓ · 이번 주 한정">
+        <div class="grid g3">
+          <div><label>기본색</label><input id="c1" type="color" value="#2663eb"></div>
+          <div><label>보조색</label><input id="c2" type="color" value="#14b8a6"></div>
+          <div><label>텍스트색</label><input id="tx" type="color" value="#ffffff"></div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button id="genBanner" class="btn primary">미리보기</button>
+          <button id="saveBanner" class="btn">PNG 저장</button>
+        </div>
+        <p id="bnNote" class="muted" style="margin-top:6px"></p>
+      </div>
+      <div>
+        <canvas id="preview" width="1080" height="1080"></canvas>
+      </div>
+    </div>
 
-    document.getElementById("loginBtn").addEventListener("click", () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      signInWithEmailAndPassword(auth, email, password)
-        .then(user => showDashboard(user.user))
-        .catch(err => alert(err.message));
-    });
+    <div class="grid g2" style="margin-top:18px">
+      <div>
+        <h3>캡션</h3>
+        <label>키워드(쉼표)</label><input id="kw" placeholder="카페, 시험기간, 집중, 할인">
+        <label>톤</label>
+        <select id="tone">
+          <option value="friendly">친근함</option>
+          <option value="minimal">미니멀</option>
+          <option value="energetic">에너지</option>
+        </select>
+        <div class="row" style="margin-top:8px">
+          <button id="genCaps" class="btn">5개 생성</button>
+          <button id="copyCaps" class="btn ghost">복사</button>
+        </div>
+      </div>
+      <div>
+        <label>결과</label>
+        <textarea id="capsOut" placeholder="여기에 캡션이 생성됩니다."></textarea>
+      </div>
+    </div>
+  </section>
 
-    document.getElementById("signupBtn").addEventListener("click", () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      createUserWithEmailAndPassword(auth, email, password)
-        .then(user => showDashboard(user.user))
-        .catch(err => alert(err.message));
-    });
+  <!-- 오너 도구(라이선스 해시 생성기) -->
+  <section id="tab-owner" class="card hidden">
+    <h2>🗝️ 오너 도구 — 라이선스 해시 생성</h2>
+    <p class="muted">이메일 + 키 + SALT → SHA-256 해시를 만들어 <b>licenses.json</b>에 추가하세요.</p>
+    <div class="grid g3">
+      <div><label>이메일</label><input id="ownEmail" placeholder="customer@example.com"></div>
+      <div><label>라이선스 키</label><input id="ownKey" placeholder="ABCD-EFGH-IJKL"></div>
+      <div><label>플랜</label><select id="ownPlan"><option>pro</option><option>lite</option></select></div>
+    </div>
+    <div class="grid g3">
+      <div><label>만료일(선택)</label><input id="ownExp" placeholder="YYYY-MM-DD"></div>
+      <div><label>SALT (앱과 동일)</label><input id="ownSalt" placeholder="SALT" /></div>
+      <div class="row" style="align-items:end"><button id="makeHash" class="btn primary">해시 생성</button></div>
+    </div>
+    <pre id="hashOut" class="card" style="margin-top:10px;white-space:pre-wrap"></pre>
+    <p class="muted" style="margin-top:6px">생성된 JSON 객체를 GitHub의 <b>licenses.json</b> 배열에 추가 후 커밋하세요.</p>
+  </section>
 
-    document.getElementById("demoBtn").addEventListener("click", () => {
-      showDashboard({ email: "demo@brandmate.com" });
-    });
+</div>
 
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      signOut(auth).then(() => {
-        authContainer.classList.remove("hidden");
-        dashboard.classList.add("hidden");
-      });
-    });
+<script type="module">
+// ============== TODO: 설정 3곳 수정 ==============
+// 1) Stripe Payment Link(테스트) — Stripe 대시보드에서 만든 결제 링크로 교체
+const STRIPE_LINK = "https://buy.stripe.com/test_example_link";
 
-    document.getElementById("payBtn").addEventListener("click", () => {
-      // Stripe 테스트 결제 URL
-      window.open("https://buy.stripe.com/test_example_link", "_blank");
-    });
+// 2) Firebase 설정 — 본인 프로젝트 값으로 교체
+const firebaseConfig = {
+  apiKey: "YOUR_FIREBASE_API_KEY",
+  authDomain: "YOUR_FIREBASE_AUTH_DOMAIN",
+  projectId: "YOUR_FIREBASE_PROJECT_ID",
+  appId: "YOUR_FIREBASE_APP_ID"
+};
 
-    function showDashboard(user) {
-      userInfo.textContent = `로그인됨: ${user.email}`;
-      authContainer.classList.add("hidden");
-      dashboard.classList.remove("hidden");
-    }
-  </script>
+// 3) 라이선스 화이트리스트 위치 + SALT — GitHub raw JSON 주소 & 임의 SALT
+const LICENSES_URL = "https://raw.githubusercontent.com/<your-id>/<your-repo>/main/licenses.json";
+const SALT = "CHANGE_ME_SALT_2025";
+// =================================================
+
+// ─── 공통 도우미 ──────────────────────────────────
+const $ = (q)=>document.querySelector(q);
+const $$ = (q)=>document.querySelectorAll(q);
+const setTxt=(el,v)=>el.textContent=v;
+const show=(id)=>document.getElementById(id).classList.remove('hidden');
+const hide=(id)=>document.getElementById(id).classList.add('hidden');
+
+async function sha256(s){
+  const b=new TextEncoder().encode(s);
+  const h=await crypto.subtle.digest("SHA-256",b);
+  return Array.from(new Uint8Array(h)).map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+function fmt(d){return d.toISOString().slice(0,10);}
+
+// ─── 탭 전환 ──────────────────────────────────────
+function activate(tab){
+  ["auth","dash","tools","owner"].forEach(t=>{
+    document.getElementById("tab-"+t).classList.toggle("hidden",t!==tab);
+  });
+}
+$$('.nav .btn[data-tab]').forEach(b=>b.addEventListener('click',()=>activate(b.dataset.tab)));
+$$('[data-tab-jump]').forEach(b=>b.addEventListener('click',()=>activate(b.dataset.tabJump)));
+activate('auth'); // 초기
+
+// ─── Stripe 링크 ──────────────────────────────────
+$("#payBtn").addEventListener("click", ()=>window.open(STRIPE_LINK,"_blank"));
+$("#payLink").href = STRIPE_LINK;
+$("#toPayment").addEventListener("click", ()=>{activate('auth'); window.scrollTo({top:0,behavior:'smooth'})});
+
+// ─── Firebase Auth ────────────────────────────────
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+$("#loginBtn").addEventListener("click", async ()=>{
+  $("#authMsg").textContent = "로그인 중...";
+  try{
+    const u = await signInWithEmailAndPassword(auth, $("#email").value, $("#password").value);
+    $("#authMsg").textContent = "로그인 성공!";
+  }catch(e){ $("#authMsg").textContent = e.message; }
+});
+
+$("#signupBtn").addEventListener("click", async ()=>{
+  $("#authMsg").textContent = "회원가입 중...";
+  try{
+    const u = await createUserWithEmailAndPassword(auth, $("#email").value, $("#password").value);
+    $("#authMsg").textContent = "회원가입 완료!";
+  }catch(e){ $("#authMsg").textContent = e.message; }
+});
+
+$("#demoBtn").addEventListener("click", ()=>{
+  localStorage.setItem("bm_plan","pro");
+  localStorage.setItem("bm_until","2099-12-31");
+  updatePlanUI();
+  activate('dash');
+});
+
+$("#logoutBtn").addEventListener("click", ()=>signOut(auth));
+
+onAuthStateChanged(auth, (user)=>{
+  if(user){
+    setTxt($("#who"), user.email);
+    $("#logoutBtn").classList.remove("hidden");
+    activate('dash');
+  }else{
+    setTxt($("#who"), "게스트");
+    $("#logoutBtn").classList.add("hidden");
+  }
+  updatePlanUI();
+});
+
+// ─── 라이선스 체크(화이트리스트 JSON) ─────────────
+async function fetchLicenses(){
+  const r = await fetch(LICENSES_URL, {cache:"no-store"});
+  if(!r.ok) throw new Error("licenses.json을 불러올 수 없음");
+  return r.json();
+}
+async function checkLicense(email,key){
+  try{
+    const list = await fetchLicenses();
+    const digest = await sha256(`${email}:${key}:${SALT}`);
+    const today = fmt(new Date());
+    const rec = list.find(x => x.hash===digest && (!x.expires||x.expires>=today));
+    return rec || null;
+  }catch(e){ return null }
+}
+$("#unlockBtn").addEventListener("click", async ()=>{
+  $("#licMsg").textContent = "검증 중...";
+  const rec = await checkLicense($("#licEmail").value.trim(), $("#licKey").value.trim());
+  if(rec){
+    localStorage.setItem("bm_plan", (rec.plan||"pro"));
+    localStorage.setItem("bm_until", (rec.expires||"—"));
+    $("#licMsg").innerHTML = `<span class="ok">인증 성공</span> — 플랜: ${(rec.plan||"pro").toUpperCase()}${rec.expires?` · 만료 ${rec.expires}`:''}`;
+    updatePlanUI(); activate('dash');
+  }else{
+    $("#licMsg").innerHTML = `<span class="err">인증 실패</span> — 이메일/키 또는 만료 확인`;
+  }
+});
+
+function updatePlanUI(){
+  const plan = localStorage.getItem("bm_plan") || "lite";
+  const until = localStorage.getItem("bm_until") || "—";
+  $("#plan").textContent = plan.toUpperCase();
+  $("#planBadge").textContent = `PLAN: ${plan.toUpperCase()}`;
+  $("#expiry").textContent = until;
+}
+
+// ─── 오너 도구: 해시 생성기 ───────────────────────
+$("#makeHash").addEventListener("click", async ()=>{
+  const em = $("#ownEmail").value.trim();
+  const key = $("#ownKey").value.trim();
+  const salt = $("#ownSalt").value.trim() || SALT;
+  if(!em || !key){ $("#hashOut").textContent = "이메일/키를 입력하세요"; return; }
+  const digest = await sha256(`${em}:${key}:${salt}`);
+  const obj = {hash:digest, plan: $("#ownPlan").value, ...( $("#ownExp").value ? {expires:$("#ownExp").value} : {} )};
+  $("#hashOut").textContent = JSON.stringify(obj, null, 2);
+});
+
+// ─── 배너 생성(간단 캔버스) ───────────────────────
+const cv = document.getElementById('preview');
+const ctx = cv.getContext('2d');
+
+function drawBanner(){
+  const W=cv.width, H=cv.height;
+  const c1=$("#c1").value, c2=$("#c2").value, tx=$("#tx").value;
+  const title=$("#bnTitle").value||"오늘의 시그니처 20% OFF";
+  const sub=$("#bnSub").value||"학생증 제시 1,000원↓ · 이번 주 한정";
+
+  // 배경 그라디언트
+  const g=ctx.createLinearGradient(0,0,W,H); g.addColorStop(0,c1); g.addColorStop(1,c2);
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+  // 살짝 패턴
+  ctx.globalAlpha=0.07; ctx.fillStyle="#fff";
+  for(let i=0;i<6;i++){ ctx.beginPath(); ctx.arc(Math.random()*W,Math.random()*H,80+Math.random()*120,0,Math.PI*2); ctx.fill(); }
+  ctx.globalAlpha=1;
+
+  // 텍스트
+  ctx.fillStyle=tx;
+  ctx.font=`800 96px Inter, Pretendard, Noto Sans KR, sans-serif`;
+  ctx.fillText(title, 80, 520, W-160);
+  ctx.font=`500 44px Inter, Pretendard, Noto Sans KR, sans-serif`;
+  ctx.fillText(sub, 80, 620, W-160);
+
+  $("#bnNote").textContent = "미리보기 1080×1080 — PNG 저장을 누르면 파일이 내려갑니다.";
+}
+$("#genBanner").addEventListener("click", drawBanner);
+$("#saveBanner").addEventListener("click", ()=>{
+  const a=document.createElement('a');
+  a.download='banner.png';
+  a.href=cv.toDataURL('image/png');
+  a.click();
+});
+drawBanner();
+
+// ─── 캡션 생성 ────────────────────────────────────
+const CAP = {
+  friendly:[
+    "오늘도 @{brand}! {offer} ☕️ #{tags}",
+    "시험기간엔 {product}! {reason} 🔥 #{tags}",
+    "{offer} · 지금 {call}",
+    "집중 모드 ON, {product}로 {benefit}! #{tags}",
+    "팔로우하고 쿠폰 받기 🎟 #{tags}"
+  ],
+  minimal:[
+    "{product}. {benefit}. #{tags}",
+    "{offer}. {call}",
+    "{brand} — {tagline}.",
+    "{product}: {reason}",
+    "오늘만. #{tags}"
+  ],
+  energetic:[
+    "{product} 폭발 세일! {offer} ⚡️ 지금 {call}",
+    "오늘 안 사면 손해‼️ {offer} #{tags}",
+    "에너지 충전 완료. {product}로 {benefit}!",
+    "단 24시간 {offer} 🔥",
+    "DM 열려있어요 → {call}"
+  ]
+};
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function hashTags(k){return k.split(',').map(s=>('#'+s.trim().replace(/\s+/g,''))).filter(Boolean).slice(0,5).join(' ')}
+$("#genCaps").addEventListener("click", ()=>{
+  const tone=$("#tone").value;
+  const brand="BrandMate Cafe";
+  const product="시그니처";
+  const offer="학생 1,000원↓";
+  const reason="롱텀 카페인으로 오래 가요";
+  const benefit="집중 유지";
+  const call="방문/선주문";
+  const tags=hashTags($("#kw").value||"카페,학생,집중,시험,할인");
+  const tagline="한 잔의 집중을 내일로";
+  const arr = Array.from({length:5}, (_,i)=>{
+    return CAP[tone][i].replace(/{brand}/g,brand).replace(/{product}/g,product)
+      .replace(/{offer}/g,offer).replace(/{reason}/g,reason).replace(/{benefit}/g,benefit)
+      .replace(/{call}/g,call).replace(/{tags}/g,tags).replace(/{tagline}/g,tagline);
+  });
+  $("#capsOut").value = arr.join("\n\n");
+});
+$("#copyCaps").addEventListener("click", ()=>{ $("#capsOut").select(); document.execCommand('copy'); });
+
+</script>
 </body>
 </html>
